@@ -1,0 +1,202 @@
+<html>
+<head>
+<title>Greg's Gambits | Greg's Concentration</title>
+<link href="greg.css" rel="stylesheet" type="text/css" />
+<script type = "text/javascript">
+    
+//Array holding all the card images
+var cards;
+//Number of rows    
+var Rows;   
+//Number of columns
+var Columns;
+
+//Used to keep track on which card was flipped first
+var firstFlip = "";
+var firstFlipLoc = "";
+
+//Flag to disable flipping after the second flip. Needed to enforce the timeout on a wrong match.
+var disableFlip = false;
+    
+    function setup(){
+        //How many pairs will the game have
+        var numOfCards = document.getElementById("slider").value * 2;
+        
+        //Calculate how many rows and columns, based on the number of cards
+        Columns = Math.ceil(Math.sqrt(numOfCards));
+        Rows = Math.ceil(numOfCards/Columns);
+        
+        //Calculate max height of cards
+        var maxH = Math.floor((480 - ((Columns - 1) * 10))/Columns);
+        
+        //Where in the HTML the table will go
+        var tableLoc = document.getElementById("table");
+        
+        //Create the table
+        var table = document.createElement("table");
+        table.id="playingBoard";
+        
+        var tbody = document.createElement("tbody");
+        
+        var count = 0;
+        for(i = 0; i < Rows; i++){
+            var row = document.createElement("tr");
+            
+            for(var j = 0; j < Columns; j++){
+                var cell = document.createElement("td");
+                cell.style = "text-align: center; padding: 5;";
+                
+                if(count < numOfCards){     //Because the grid may have more cells than cards
+                    var image = document.createElement("img");    
+                    image.src = "images/concentration/back.png";
+                    image.value = count;    //Used to reference the card position in the grid
+                    image.style.maxWidth = maxH + "px";
+                    image.ondragstart = function(){return false;};  //disable click and drag of images
+                    
+                    image.onmousedown = function(){
+                        flip(this, this.value)
+                    };
+                    
+                    cell.appendChild(image);    //add the <img> to the <td>
+                    
+                    count++;
+                }
+                
+                row.appendChild(cell);          //add <td> to <tr>
+            }
+            tbody.appendChild(row);             //add <tr> to <tbody>
+        }
+        table.appendChild(tbody);               //add <tbody> to <table>
+        tableLoc.appendChild(table);            //add <table> to document
+        
+        //Create the array with the card images 
+        
+        cards = new Array(numOfCards);
+        
+        //Array with a number of elements equal to the total number of card images
+        var cardNumber = [1,2,3,4,5,6,7,8,9,10,11,12];
+        
+        //There are 12 images to choose from. Pick one at random -> add 2 copies of it to the cards array ->
+        //  then remove it from the cardNumber array so a different random image may be choosen.
+        for(var c = 0; c < numOfCards; c++){
+            var num = Math.floor(Math.random() * cardNumber.length);
+            var cardNum = cardNumber[num];
+    
+            cards[c] = "images/concentration/card" + cardNum + ".png";
+            c++;
+            cards[c] = "images/concentration/card" + cardNum + ".png";
+            
+            cardNumber.splice(num, 1);  //remove the cardNumber from the array, so as not to repeat the image
+        }
+        
+        //Shuffle the cards
+        for(i = 0; i < cards.length; i++){
+            //Randomly swap the values in the cards array
+            var randNum = Math.floor(Math.random()*cards.length);
+            
+            var temp = cards[i];
+            cards[i] = cards[randNum];
+            cards[randNum] = temp;
+        }
+        
+        //Swap Start button to Reset button
+        document.getElementById("startReset").value = "Reset";
+        document.getElementById("startReset").onclick = function(){
+            reset();
+        };
+        
+        
+    }
+    
+    function flip(elem, index){
+        console.log(index);
+        if(disableFlip == false){   //disable flipping while waiting for cards to flip back
+            
+            if(firstFlip == ""){   //first flip
+                firstFlip = cards[index];   //store the first flip
+                firstFlipLoc = elem;        //store first flip location   
+                elem.src = cards[index];    //show the card
+
+            }else if(firstFlip != "" && (firstFlipLoc != elem)){              //second flip
+                elem.src = cards[index];    //show the card
+
+                if(firstFlip == cards[index]){      //Match                                        
+                    elem.onmousedown = function(){return false;};               //disable the onclick function
+                    firstFlipLoc.onmousedown = function(){return false;};
+                    
+                }else{                              //No match
+                    disableFlip = true;
+                    
+                    window.setTimeout(function(){       //Wait a second and flip the cards back
+                        firstFlipLoc.src = "images/concentration/back.png";
+                        elem.src = "images/concentration/back.png";
+                        disableFlip = false;
+                    },800);
+                }
+
+                firstFlip = "";
+            }
+
+            elem.src = cards[index];
+        }
+
+    }
+    
+    //Reset for a new game
+    function reset(){
+        document.getElementById("startReset").value = "Start";
+        document.getElementById("startReset").onclick = function(){
+            setup();
+        };
+        document.getElementById("table").innerHTML = "";
+    }
+    
+
+    
+
+</script>
+
+<style type="text/css">
+    
+    
+</style>
+    
+</head>
+<body>
+<div id="container">
+<img src="images/superhero.jpg" class="floatleft" />
+<h1 id="logo"><em>Greg's Concentration</em></h1>
+<p>&nbsp;</p>
+<p>&nbsp;</p>
+<div id="nav">
+  <p><a href="index.html">Home</a>
+  <a href="greg.html">About Greg</a>
+  <a href="play_games.html">Play a Game</a>
+  <a href="sign.html">Sign In</a>
+  <a href="contact.html">Contact Us</a></p>
+</div>    
+<div id="content" style="width: 70%; margin: auto;">
+<p>Number of pairs: <span id="sliderV" style="display: inline-block; width: 2em;"></span><input type="range" id="slider" min="2" max="12" value="6" style="margin: 0 15; vertical-align: text-bottom;"><input id="startReset" type="button" value = "Start" onclick="setup();" style="padding: 0 15; height: 25;"></p>
+
+<script>
+//Code for the slider, has to be placed after the slider
+var slider = document.getElementById("slider");
+var output = document.getElementById("sliderV");
+
+output.innerHTML = slider.value;
+
+slider.oninput = function(){
+    output.innerHTML = this.value;
+};    
+</script>
+    
+<div id="table" width = "90%" align = "center">    
+</div>
+</div>
+<div id="footer">Copyright &copy; 2013 Greg's Gambits<br />
+<a href="mailto:Juan@Leon.com">
+Juan@Leon.com</a></div>
+</div>
+    
+
+</body></html>
